@@ -105,11 +105,16 @@ def get_mirror_link(mirror_data):
 
 def launch_mpv(url):
     if hasattr(sys, 'getandroidapilevel'):
-        print('android')
+        print(f'> Executing: nohup am start --user 0 -a android.intent.action.VIEW -d "{url}" -n is.xyz.mpv/.MPVActivity >/dev/null 2>&1 &')
+        system(f'nohup am start --user 0 -a android.intent.action.VIEW -d "{url}" -n is.xyz.mpv/.MPVActivity >/dev/null 2>&1 &')
 
-    else:
+    elif sys.platform == 'win32':
         print(f'> Executing: mpv {url}')
         system(f'mpv {url}')
+
+    else:
+        print(f'> Executing: mpv {url} >/dev/null 2>&1 &')
+        system(f'mpv {url} >/dev/null 2>&1 &')
 # --- end functions ---
 
 
