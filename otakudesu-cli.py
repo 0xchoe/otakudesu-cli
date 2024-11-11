@@ -6,8 +6,10 @@ from urllib.parse import urlparse
 import inquirer
 from os import system
 import sys
+import re
 
 baseUrl = "https://otakudesu.cloud"
+re_pattern = ' Subtitle Indonesia'
 
 # --- start functions ---
 def anime_search(query):
@@ -19,7 +21,8 @@ def anime_search(query):
 
     for anime in anime_list:
         title_and_link = anime.find('a', href=True)
-        data[title_and_link.text] = title_and_link['href']
+        title_re = re.sub(re_pattern, '', title_and_link.text)
+        data[title_re] = title_and_link['href']
 
     return data
 
@@ -32,7 +35,8 @@ def episode_list(anime_link):
 
     for episode in episodes:
         title_and_link = episode.find('a', href=True)
-        data[title_and_link.text] = title_and_link['href']
+        title_re = re.sub(re_pattern, '', title_and_link.text)
+        data[title_re] = title_and_link['href']
 
     return data
 
@@ -103,18 +107,25 @@ def get_mirror_link(mirror_data):
 
     return link
 
-def launch_mpv(url):
+def launch_browser(url):
     if hasattr(sys, 'getandroidapilevel'):
-        print(f'> Executing: nohup am start --user 0 -a android.intent.action.VIEW -d "{url}" -n is.xyz.mpv/.MPVActivity >/dev/null 2>&1 &')
-        system(f'nohup am start --user 0 -a android.intent.action.VIEW -d "{url}" -n is.xyz.mpv/.MPVActivity >/dev/null 2>&1 &')
+        print(f'> Executing: termux-open-url {url}')
+        system(f'termux-open-url {url}')
 
     elif sys.platform == 'win32':
-        print(f'> Executing: mpv {url}')
-        system(f'mpv {url}')
+        print(f'> Executing: start {url}')
+        system(f'start {url}')
 
     else:
-        print(f'> Executing: mpv {url} >/dev/null 2>&1 &')
-        system(f'mpv {url} >/dev/null 2>&1 &')
+        print(f'> Executing: xdg-open {url}')
+        system(f'xdg-open {url}')
+
+def clear_screen():
+    if sys.platform == 'win32':
+        system('cls')
+        
+    else:
+        system('clear')
 # --- end functions ---
 
 
@@ -123,26 +134,30 @@ def main():
     try:
         find_anime = inquirer.text(message='Cari Anime')
         anime_list = anime_search(find_anime)
+        clear_screen()
 
         if not anime_list:
             print(f'Anime tidak ditemukan')
             exit()
 
-        anime_choices = inquirer.list_input('Pilih Anime', choices=list(anime_list))
-        anime_link = anime_list[anime_choices]
+        anime_choice = inquirer.list_input('Pilih Anime', choices=list(anime_list))
+        anime_link = anime_list[anime_choice]
+        clear_screen()
         
         get_episode = episode_list(anime_link)
-        episode_choices = inquirer.list_input('Pilih Episode', choices=list(get_episode))
-        episode_link = get_episode[episode_choices]
+        episode_choice = inquirer.list_input('Pilih Episode', choices=list(get_episode))
+        episode_link = get_episode[episode_choice]
+        clear_screen()
         
         mirror_list = get_mirror(episode_link)
-        mirror_choices = inquirer.list_input('Pilih Mirror', choices=list(mirror_list))
-        mirror_data = mirror_list[mirror_choices]
+        mirror_choice = inquirer.list_input('Pilih Mirror', choices=list(mirror_list))
+        mirror_data = mirror_list[mirror_choice]
+        clear_screen()
         
         mirror_link = get_mirror_link(mirror_data)
 
-        print(f'> Mirror link: {mirror_link}')
-        launch_mpv(mirror_link)
+        print(f'> Anime: {anime_choice}\n> Episode: {episode_choice}\n> Mirror: {mirror_choice}\n> Mirror link: {mirror_link}')
+        launch_browser(mirror_link)
 
     except KeyboardInterrupt:
         print('Operasi dibatalkan oleh user')
