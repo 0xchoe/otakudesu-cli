@@ -12,7 +12,7 @@ import inquirer
 base_url = "https://otakudesu.cloud"
 
 class Otakudesu:
-    def __init__(self, base_url,):
+    def __init__(self, base_url):
         self.base_url = base_url
         self.re_pattern = ' Subtitle Indonesia'
 
